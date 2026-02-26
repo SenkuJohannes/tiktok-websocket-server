@@ -4,32 +4,48 @@ const express = require('express');
 
 const app = express();
 
-// IMPORTANT: Use Render's assigned port
+// Use Render's assigned port
 const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
 
 // WebSocket server
 const wss = new WebSocket.Server({ server });
 
-// Replace with your actual TikTok username
+// Log when game connects
+wss.on('connection', (ws) => {
+    console.log("🎮 Game client connected");
+
+    ws.on('close', () => {
+        console.log("❌ Game client disconnected");
+    });
+});
+
+// Replace with your TikTok username
 const tiktokUsername = "officialsenku8";
 
 // Connect to TikTok Live
 const connection = new WebcastPushConnection(tiktokUsername);
 
-connection.connect()
-    .then(state => {
-        console.log(`Connected to room ${state.roomId}`);
-    })
-    .catch(err => {
-        console.error("Failed to connect", err);
-    });
+connection.connect({
+    enableExtendedGiftInfo: true
+})
+.then(state => {
+    console.log(`✅ Connected to TikTok room ${state.roomId}`);
+})
+.catch(err => {
+    console.error("❌ Failed to connect to TikTok:", err);
+});
 
 // When a gift is received
-connection.on('gift', data => {
+connection.on('gift', (data) => {
+
+    console.log("🎁 GIFT EVENT TRIGGERED");
+    console.log("Gift:", data.giftName);
+    console.log("From:", data.uniqueId);
+    console.log("Diamonds:", data.diamondCount);
 
     const giftData = JSON.stringify({
         type: "gift",
@@ -38,12 +54,16 @@ connection.on('gift', data => {
         diamonds: data.diamondCount
     });
 
-    console.log(`${data.uniqueId} sent ${data.giftName}`);
-
-    // Send to all connected game clients
+    // Send gift to all connected game clients
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(giftData);
         }
     });
+
+});
+
+// Optional: Log errors
+connection.on('error', err => {
+    console.error("TikTok connection error:", err);
 });
