@@ -11,16 +11,16 @@ const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// WebSocket server
-const wss = new WebSocket.Server({ server });
+const connection = new WebcastPushConnection("officialsenku8");
 
-// Log when game connects
-wss.on('connection', (ws) => {
-    console.log("🎮 Game client connected");
-
-    ws.on('close', () => {
-        console.log("❌ Game client disconnected");
-    });
+connection.connect({
+    enableExtendedGiftInfo: true
+})
+.then(state => {
+    console.log("🔥 CURRENT ROOM ID:", state.roomId);
+})
+.catch(err => {
+    console.error("Failed:", err);
 });
 
 /*
