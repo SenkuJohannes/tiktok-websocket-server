@@ -3,13 +3,29 @@ const WebSocket = require('ws');
 const express = require('express');
 
 const app = express();
-
-// Use Render's assigned port
 const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// --------------------
+// WebSocket Server
+// --------------------
+
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+    console.log("🎮 Game client connected");
+
+    ws.on('close', () => {
+        console.log("❌ Game client disconnected");
+    });
+});
+
+// --------------------
+// TikTok Connection (USERNAME MODE)
+// --------------------
 
 const connection = new WebcastPushConnection("officialsenku8");
 
@@ -20,30 +36,13 @@ connection.connect({
     console.log("🔥 CURRENT ROOM ID:", state.roomId);
 })
 .catch(err => {
-    console.error("Failed:", err);
+    console.error("❌ TikTok connection failed:", err);
 });
 
-/*
-  CONNECT TO TIKTOK USING ROOM ID
-  ⚠️ IMPORTANT: This roomId only works for your CURRENT live session.
-  If you end your live and restart, you must update the roomId.
-*/
+// --------------------
+// Gift Listener
+// --------------------
 
-const connection = new WebcastPushConnection(null, {
-    roomId: "7611241903790508817"
-});
-
-connection.connect({
-    enableExtendedGiftInfo: true
-})
-.then(state => {
-    console.log(`✅ Connected to TikTok room ${state.roomId}`);
-})
-.catch(err => {
-    console.error("❌ Failed to connect to TikTok:", err);
-});
-
-// When a gift is received
 connection.on('gift', (data) => {
 
     console.log("🎁 GIFT EVENT TRIGGERED");
@@ -58,7 +57,6 @@ connection.on('gift', (data) => {
         diamonds: data.diamondCount
     });
 
-    // Send gift to all connected game clients
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(giftData);
@@ -66,7 +64,10 @@ connection.on('gift', (data) => {
     });
 });
 
-// Log TikTok errors
+// --------------------
+// Error Logging
+// --------------------
+
 connection.on('error', err => {
     console.error("TikTok connection error:", err);
 });
