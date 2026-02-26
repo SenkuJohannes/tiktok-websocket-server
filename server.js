@@ -23,11 +23,15 @@ wss.on('connection', (ws) => {
     });
 });
 
-// Replace with your TikTok username
-const tiktokUsername = "officialsenku8";
+/*
+  CONNECT TO TIKTOK USING ROOM ID
+  ⚠️ IMPORTANT: This roomId only works for your CURRENT live session.
+  If you end your live and restart, you must update the roomId.
+*/
 
-// Connect to TikTok Live
-const connection = new WebcastPushConnection(tiktokUsername);
+const connection = new WebcastPushConnection(null, {
+    roomId: "7611241903790508817"
+});
 
 connection.connect({
     enableExtendedGiftInfo: true
@@ -60,10 +64,9 @@ connection.on('gift', (data) => {
             client.send(giftData);
         }
     });
-
 });
 
-// Optional: Log errors
+// Log TikTok errors
 connection.on('error', err => {
     console.error("TikTok connection error:", err);
 });
